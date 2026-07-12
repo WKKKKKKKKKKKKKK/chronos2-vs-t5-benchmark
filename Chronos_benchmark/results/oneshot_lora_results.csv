@@ -1,0 +1,2 @@
+dataset,model,MASE,WQL,n_series,latency_s,ms_per_series,peak_mem_mb
+monash_m1_yearly,chronos-t5-small-oneshot-lora,3.4279054670353535,0.1452027880971991,181,1.243,6.87,680.4

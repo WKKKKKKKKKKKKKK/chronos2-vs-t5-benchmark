@@ -1,0 +1,30 @@
+# --- ignore everything at the repo root by default ---
+/*
+
+# --- keep only these top-level items ---
+!/.gitignore
+!/README.md
+!/Chronos2/
+!/Chronos_benchmark/
+!/chronos2_t5/
+
+# --- within the kept folders, exclude heavy / generated / private artifacts ---
+# trained checkpoints (up to several GB) and TensorBoard logs
+models/
+runs/
+_merged_tmp/
+# python / env cruft
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.ipynb_checkpoints/
+.pytest_cache/
+# scratch / recovery / temp
+_recover/
+*.tmp
+*.log
+gpu_usage.csv
+# OS
+.DS_Store
+Thumbs.db
