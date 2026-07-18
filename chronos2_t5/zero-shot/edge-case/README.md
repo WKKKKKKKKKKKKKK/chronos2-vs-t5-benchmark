@@ -5,6 +5,12 @@ Injects controlled sensor faults (spikes, drift, level-shift, missing chunks) in
 held-out window. Headline metric = **relative degradation** = metric(corrupted) / metric(clean).
 Run every script from this directory with the `chronos_bench` conda env.
 
+> **Naming convention.** Files **without** an underscore prefix are the core reproducible
+> pipeline (`run_edge_cases.py`, `perturbations.py`, `make_edgecase_notebook.py`).
+> `_`-prefixed files are **supplementary one-off analyses layered on top** of that sweep
+> (extra model configs, side probes, and the report-figure generators). They are not scratch
+> —each is documented in the table below, and some feed the report figures in `plots/`.
+
 ## Layout
 
 | path | what it holds | produced by |
