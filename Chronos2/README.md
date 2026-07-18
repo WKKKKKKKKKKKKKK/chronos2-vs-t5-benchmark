@@ -67,11 +67,16 @@ Chronos2/
 ├── src/
 │   ├── config.py                    # portable path config (env-var overrides)
 │   ├── datasets_lib.py              # Benchmark II registry (verbatim copy of the T5 benchmark's)
-│   ├── run_zeroshot_chronos2.py     # univariate + cross-learning eval + report
-│   ├── finetune_oneshot_chronos2.py # one-shot: explicit LoRA fine-tune loop (per dataset)
-│   ├── run_oneshot_chronos2.py      # one-shot eval (loads + merges adapters) + report
 │   ├── make_notebook.py             # builds (and optionally executes) the deliverable .ipynb
-│   └── smoke_test.py                # quick wiring check on 2 datasets
+│   ├── smoke_test.py                # quick wiring check on 2 datasets
+│   ├── zero_shot/
+│   │   ├── run_zeroshot_chronos2.py # univariate + cross-learning eval + report
+│   │   └── plot_zeroshot_modes.py   # per-dataset forecast plots (univariate vs cross-learning)
+│   ├── one_shot/
+│   │   ├── finetune_oneshot_chronos2.py # one-shot: explicit LoRA fine-tune loop (per dataset)
+│   │   └── run_oneshot_chronos2.py      # one-shot eval (loads + merges adapters) + report
+│   └── utils/
+│       └── monitor_resources.py     # optional GPU/CPU usage logger
 ├── docs/
 │   └── CHRONOS2_VS_T5.md            # formatting / tokenization / scaling comparison
 ├── notebooks/
@@ -111,7 +116,7 @@ will live in [`../chronos2_t5/one-shot/`](../chronos2_t5).)
 The corrupted-sensor robustness study (noisy spikes, signal drift, missing chunks) is a
 Chronos-2 **vs** Chronos-T5 comparison, so it lives in the comparison project at
 [`../chronos2_t5/zero-shot/edge-case/`](../chronos2_t5/zero-shot/edge-case/). It *reuses* this
-project's shared harness (`src/datasets_lib.py`, `src/run_zeroshot_chronos2.py`) so the numbers
+project's shared harness (`src/datasets_lib.py`, `src/zero_shot/run_zeroshot_chronos2.py`) so the numbers
 stay on the identical gluonts pipeline. See that folder's `results/EDGE_CASE_REPORT.md` and
 `Chronos2_EdgeCase_Robustness.ipynb`.
 
@@ -153,11 +158,11 @@ python src/config.py             # confirm paths resolve on this machine
 python src/smoke_test.py
 
 # full study: 25 datasets x {univariate, cross_learning}
-python src/run_zeroshot_chronos2.py
+python src/zero_shot/run_zeroshot_chronos2.py
 
 # one-shot: LoRA fine-tune per dataset (-> models/ft_oneshot/), then evaluate
-python src/finetune_oneshot_chronos2.py   # writes per-dataset adapters + manifest.csv
-python src/run_oneshot_chronos2.py        # -> oneshot_chronos2_results.csv + CHRONOS2_ONESHOT_REPORT.md
+python src/one_shot/finetune_oneshot_chronos2.py   # writes per-dataset adapters + manifest.csv
+python src/one_shot/run_oneshot_chronos2.py        # -> oneshot_chronos2_results.csv + CHRONOS2_ONESHOT_REPORT.md
 
 # build the deliverable notebook (--execute embeds results + charts inline)
 python src/make_notebook.py --execute
@@ -195,4 +200,4 @@ Run `python src/config.py` to print the resolved layout before launching a long 
 
 Implemented and **smoke-tested** (univariate + cross-learning verified on
 `exchange_rate` and `monash_m1_yearly`). The full 25-dataset run is ready to
-launch with `python src/run_zeroshot_chronos2.py`.
+launch with `python src/zero_shot/run_zeroshot_chronos2.py`.

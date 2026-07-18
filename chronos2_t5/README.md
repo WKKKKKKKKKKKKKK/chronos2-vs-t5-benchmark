@@ -26,7 +26,7 @@ pipeline / 25 Benchmark II datasets / cap=1000 / bf16, so the comparison is appl
 | `c2_vs_t5_dashboard.png` | accuracy scatter + aggregated relative score + forecast time + peak GPU memory |
 | `CHRONOS2_VS_T5_HEADTOHEAD.md` | aggregated relative score, win rate, efficiency, per-dataset MASE/WQL |
 | `forecasts/chronos2/`, `forecasts/chronos_t5/` | one forecast PNG per dataset, per model + 5×5 overview |
-| `edge-case/` | corrupted-sensor robustness study (its own README-less folder; see below) |
+| `edge-case/` | corrupted-sensor robustness study (has its own `README.md`; see below) |
 
 Reproduce (after the two sibling projects have produced their results):
 
@@ -53,7 +53,9 @@ Chronos-2 harness in `../../Chronos2/src/` so the pipeline is identical.
 | `run_edge_cases.py` | 2 models × 5 datasets × corruptions → `results/` CSV + report + figures |
 | `make_edgecase_notebook.py` | builds (and `--execute`) the deliverable notebook |
 | `Chronos2_EdgeCase_Robustness.ipynb` | generated notebook (tables, curves, example figures) |
+| `_mk_three_config.py`, `_mk_examples.py` | build the two report figures in `plots/` (win-rate heatmap; illustrative series) |
 | `results/EDGE_CASE_REPORT.md`, `results/examples/<dataset>/` | report + per-series figures |
+| `README.md` | folder guide: scripts, data deps, figure regeneration steps |
 
 ```powershell
 conda activate chronos_bench

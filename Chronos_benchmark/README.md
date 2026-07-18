@@ -7,7 +7,7 @@ and comparing to the paper's official numbers:
 - **zero-shot** — pretrained weights used as-is;
 - **one-shot** — pretrained weights fine-tuned per dataset (lr 1e-3 → 0 over 1000
   steps), as in the paper's Section 5.5.2 / Figure 6. The fine-tuning is written
-  out as an explicit PyTorch loop in `src/finetune_oneshot.py` (no `train.py`, no
+  out as an explicit PyTorch loop in `src/one_shot/finetune_oneshot.py` (no `train.py`, no
   HF `Trainer`).
 
 The evaluation deliberately reuses the **official Chronos evaluation method** so the
@@ -58,10 +58,12 @@ Chronos_benchmark/
 ├── src/
 │   ├── config.py                 # central, portable path config (env-var overrides)
 │   ├── datasets_lib.py           # Benchmark II dataset list + loading
-│   ├── run_zeroshot_official.py  # zero-shot eval + aggregated relative score
-│   ├── finetune_oneshot.py       # explicit one-shot fine-tuning (plain PyTorch loop)
-│   ├── run_oneshot_official.py   # one-shot eval + aggregated relative score
-│   └── make_notebook.py          # builds the deliverable notebook
+│   ├── make_notebook.py          # builds the deliverable notebook
+│   ├── zero_shot/
+│   │   └── run_zeroshot_official.py  # zero-shot eval + aggregated relative score
+│   └── one_shot/
+│       ├── finetune_oneshot.py       # explicit one-shot fine-tuning (plain PyTorch loop)
+│       └── run_oneshot_official.py   # one-shot eval + aggregated relative score
 ├── results/
 │   ├── zeroshot_official_results.csv · OFFICIAL_REPORT.md          # zero-shot
 │   └── oneshot_official_results.csv  · OFFICIAL_ONESHOT_REPORT.md  # one-shot
@@ -99,11 +101,11 @@ conda activate chronos_bench
 python src/config.py                  # confirm paths resolve on this machine
 
 # zero-shot (~20-30 min on a 12 GB GPU)
-python src/run_zeroshot_official.py
+python src/zero_shot/run_zeroshot_official.py
 
 # one-shot: fine-tune 25 checkpoints then evaluate (~45-60 min total)
-python src/finetune_oneshot.py        # writes models/ft_oneshot/ (resumable)
-python src/run_oneshot_official.py
+python src/one_shot/finetune_oneshot.py        # writes models/ft_oneshot/ (resumable)
+python src/one_shot/run_oneshot_official.py
 ```
 
 Zero-shot writes `results/zeroshot_official_results.csv` + `OFFICIAL_REPORT.md`;

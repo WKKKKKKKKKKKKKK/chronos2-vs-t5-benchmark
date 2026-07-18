@@ -45,7 +45,7 @@ comparison project **`../chronos2_t5/zero-shot/`** (dashboard, per-dataset scatt
 forecast plots); the model-vs-model architecture write-up is in
 [`docs/CHRONOS2_VS_T5.md`](../docs/CHRONOS2_VS_T5.md).
 
-> Heavy work is produced offline by `src/run_zeroshot_chronos2.py`; this notebook
+> Heavy work is produced offline by `src/zero_shot/run_zeroshot_chronos2.py`; this notebook
 > loads `results/zeroshot_chronos2_results.csv` and shows one small live demo.
 """)
 
@@ -68,7 +68,7 @@ for _c in (_here, *_here.parents):
         ROOT = _c; break
 else:
     raise FileNotFoundError("project root (src/config.py) not found from " + str(_here))
-SRC = ROOT / "src"; sys.path.insert(0, str(SRC))
+SRC = ROOT / "src"; [sys.path.insert(0, str(SRC / p)) for p in ("", "zero_shot", "one_shot")]
 
 import numpy as np, pandas as pd, torch
 from scipy.stats import gmean

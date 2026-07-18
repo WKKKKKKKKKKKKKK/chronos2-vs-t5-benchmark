@@ -81,7 +81,7 @@ axes[0].legend(fontsize=7.5,loc="upper left",framealpha=0.95,ncol=1)
 fig.suptitle("Illustrative series — under corruption Chronos-2 tracks the actual; Chronos-T5 breaks",
              fontsize=10.5,fontweight="bold",color=NAVY,y=1.02)
 fig.tight_layout()
-out=HERE.parent.parent.parent/"weekly_report"/"_assets"/"robust_examples.png"
+out=HERE/"plots"/"robust_examples.png"
 fig.savefig(out,dpi=200,bbox_inches="tight"); plt.close(fig)
 from PIL import Image
 print("saved",out,Image.open(out).size)

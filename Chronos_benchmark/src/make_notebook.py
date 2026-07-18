@@ -42,8 +42,8 @@ comparable to the paper:
 * metrics via gluonts `MASE` + `MeanWeightedSumQuantileLoss`,
 * the **aggregated relative score** (geometric mean of `model / Seasonal-Naive`).
 
-> Heavy stages are produced offline by `src/run_zeroshot_official.py`,
-> `src/finetune_oneshot.py`, `src/run_oneshot_official.py`; this notebook loads
+> Heavy stages are produced offline by `src/zero_shot/run_zeroshot_official.py`,
+> `src/one_shot/finetune_oneshot.py`, `src/one_shot/run_oneshot_official.py`; this notebook loads
 > their results from `results/*.csv` and shows one small live zero-shot demo.
 > Only deviation from the paper: a 1000-series cap for laptop tractability.
 """)
@@ -68,7 +68,7 @@ for _c in (_here, *_here.parents):
         ROOT = _c; break
 else:
     raise FileNotFoundError("project root (src/config.py) not found from " + str(_here))
-SRC = ROOT / "src"; sys.path.insert(0, str(SRC))
+SRC = ROOT / "src"; [sys.path.insert(0, str(SRC / p)) for p in ("", "zero_shot", "one_shot")]
 sys.path.insert(0, str(SRC / "zero_shot"))   # run_zeroshot_official.py moved here in the reorg
 
 import numpy as np, pandas as pd, torch
@@ -215,7 +215,7 @@ md(r"""## 7. Findings
   move below the diagonal in chart (b).
 * **Method is paper-faithful**: gluonts metrics + split, seasonality auto-inferred,
   no series-length filtering; the fine-tuning is an explicit PyTorch loop
-  (`src/finetune_oneshot.py`), not `train.py` or HF `Trainer`.
+  (`src/one_shot/finetune_oneshot.py`), not `train.py` or HF `Trainer`.
 * **Residual gap** to the paper is from the 1000-series cap (paper uses full data)
   and a single seed.
 * **Efficiency baseline recorded** (Section 4.1): per-dataset forecast latency and

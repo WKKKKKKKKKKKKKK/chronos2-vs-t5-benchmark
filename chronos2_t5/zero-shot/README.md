@@ -14,8 +14,8 @@ Scripts only READ the per-model result CSVs produced by the sibling projects
 | `benchmark/` | leaderboard (win rate, skill, runtime, leakage, failures) + win-rate bars + pairwise win-rate matrices | `benchmark_table.py` |
 | `headtohead/` | C2-vs-T5 aggregate dashboard + report | `compare_zeroshot.py` |
 | `cl_length/` | cross-learning benefit vs series length (scatter + trend) + per-series CSV | `cl_benefit_vs_length.py` |
-| `crosslearning_io/` | cross-learning input-group → target-output mechanism figure (per dataset) | `plot_crosslearning_io.py` |
-| `edge-case/` | corruption-robustness sub-study (own scripts + `results/`) | `edge-case/run_edge_cases.py` |
+| `crosslearning_io/` | cross-learning input-group → target-output mechanism figure (per dataset) — *generated on demand by the script below; not committed* | `plot_crosslearning_io.py` |
+| `edge-case/` | corruption-robustness sub-study (own scripts + `results/` + report figures in `plots/`; see `edge-case/README.md`) | `edge-case/run_edge_cases.py` |
 
 ## Scripts
 
