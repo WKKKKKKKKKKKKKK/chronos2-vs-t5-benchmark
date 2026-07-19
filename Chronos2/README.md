@@ -109,7 +109,9 @@ Two things differ by **architecture, not recipe**:
 
 One-shot is evaluated in **univariate** mode — the apples-to-apples counterpart of the
 T5 one-shot and of C2 zero-shot univariate. (The C2-vs-T5 one-shot head-to-head itself
-will live in [`../chronos2_t5/one-shot/`](../chronos2_t5).)
+lives in [`../chronos2_t5/one-shot/`](../chronos2_t5/one-shot/); it is **done and
+reported** — once both models are LoRA-tuned they are a statistical tie, so C2's edge is
+the zero-shot regime, not fine-tuning.)
 
 ## Edge-case robustness study (Chronos-2 vs Chronos-T5)
 
@@ -198,6 +200,10 @@ Run `python src/config.py` to print the resolved layout before launching a long 
 
 ## Status
 
-Implemented and **smoke-tested** (univariate + cross-learning verified on
-`exchange_rate` and `monash_m1_yearly`). The full 25-dataset run is ready to
-launch with `python src/zero_shot/run_zeroshot_chronos2.py`.
+**Complete and run.** The full 25-dataset study has been executed for both regimes —
+zero-shot (univariate + cross-learning) and one-shot (LoRA) — and the results are
+committed under [`results/`](results/): `zeroshot_chronos2_results.csv` +
+`CHRONOS2_REPORT.md`, `oneshot_chronos2_results.csv` + `CHRONOS2_ONESHOT_REPORT.md`, and
+per-dataset forecast plots in `results/forecasts/chronos2/`. Heavy artifacts (LoRA
+adapters under `models/`, TensorBoard logs under `runs/`) are git-ignored; re-generate
+them with the commands in **Run** above, or just read the committed CSVs and reports.

@@ -86,20 +86,35 @@ Run from each sub-project root. Heavy artifacts (`models/`, `runs/`) are **not**
 re-generate them, or just read the committed `results/*.csv` and `*_REPORT.md`.
 
 ```bash
-# 1) Chronos-T5 (incumbent)
-python Chronos_benchmark/src/zero_shot/run_zeroshot_official.py
-python Chronos_benchmark/src/one_shot/finetune_oneshot.py --lora
-python Chronos_benchmark/src/one_shot/run_oneshot_official.py --lora
+# 1) Chronos-T5 engine (incumbent) — see Chronos_benchmark/README.md
+python Chronos_benchmark/src/zero_shot/run_zeroshot_official.py       # zero-shot
+python Chronos_benchmark/src/one_shot/finetune_oneshot.py            # one-shot (paper reproduction, full FT)
+python Chronos_benchmark/src/one_shot/run_oneshot_official.py
 
-# 2) Chronos-2 (new)
-python Chronos2/src/zero_shot/run_zeroshot_chronos2.py
-python Chronos2/src/one_shot/finetune_oneshot_chronos2.py
+# 2) Chronos-2 engine (new) — see Chronos2/README.md
+python Chronos2/src/zero_shot/run_zeroshot_chronos2.py               # zero-shot (univariate + cross-learning)
+python Chronos2/src/one_shot/finetune_oneshot_chronos2.py           # one-shot (LoRA)
 python Chronos2/src/one_shot/run_oneshot_chronos2.py
 
-# 3) Fair comparison + analyses (aggregate the CSVs above)
-python chronos2_t5/zero-shot/scripts/benchmark_table.py
-python chronos2_t5/one-shot/scripts/head_to_head.py
-python chronos2_t5/one-shot/scripts/summary_matrix.py
+# 3) Fair comparison — aggregates the engines' CSVs (run from each folder; see chronos2_t5/README.md)
+#    3a. one-shot: LoRA-tune BOTH models via the shared HPO pipeline, then the head-to-head.
+#        (produces the oneshot_hpo_*.csv that the leaderboard + head-to-head + summary all read)
+cd chronos2_t5/one-shot
+python scripts/hpo.py --model c2
+python scripts/hpo.py --model t5
+python scripts/final_run.py --model c2
+python scripts/final_run.py --model t5
+python scripts/phase6_cltrain.py         # C2 train-time cross-learning (leaderboard/summary input)
+python scripts/head_to_head.py           # -> reports/HEAD_TO_HEAD_REPORT.md
+python scripts/summary_matrix.py
+#    3b. zero-shot: dashboard + leaderboard (no GPU; reads the CSVs from steps 1-3a)
+cd ../zero-shot
+python scripts/compare_zeroshot.py       # dashboard + head-to-head report
+python scripts/benchmark_table.py        # leaderboard (win rate, skill, runtime)
+
+# 4) The deliverable notebook — the whole comparison, CPU-only, from the committed CSVs
+cd ..
+python make_comparison_notebook.py --execute
 ```
 
 ---
@@ -117,7 +132,9 @@ Fastest way to understand the whole thing:
    (T5 needs 20-sample decode; C2 does not). Run `Chronos2/src/smoke_test.py`.
 3. **One-shot (LoRA)** → `*/one_shot/finetune_oneshot*.py` then `run_oneshot*.py` (they reuse the
    harness above so the numbers stay comparable).
-4. **Comparison & analysis** → `chronos2_t5/` scripts + the `*_REPORT.md` files.
+4. **Comparison & analysis** → the one-notebook overview
+   [`chronos2_t5/Chronos2_vs_ChronosT5_HeadToHead.ipynb`](chronos2_t5/Chronos2_vs_ChronosT5_HeadToHead.ipynb)
+   (runs on CPU from the committed CSVs), then the `chronos2_t5/` scripts + `*_REPORT.md` files.
 5. **Robustness** → `chronos2_t5/zero-shot/edge-case/` (the one self-running sub-study).
 
 ## Metrics (quick reference)

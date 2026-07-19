@@ -7,6 +7,8 @@ d:\KAUST\SAUDI_ARAMCO\
 ├── Chronos2\          # Chronos-2 zero-shot (its own results + vs the Chronos-2 paper)
 ├── Chronos_benchmark\ # Chronos-T5 zero-shot + one-shot reproduction
 └── chronos2_t5\       # THIS: head-to-head Chronos-2 vs Chronos-T5
+    ├── Chronos2_vs_ChronosT5_HeadToHead.ipynb  # ← START HERE: the whole comparison, one notebook
+    ├── make_comparison_notebook.py             # (re)builds that notebook from the committed CSVs
     ├── zero-shot\
     │   └── edge-case\ # corrupted-sensor robustness study (runs both models)
     └── one-shot\
@@ -16,6 +18,23 @@ The head-to-head artifacts **do not** run/own a model — they read the per-data
 two sibling projects already produced. (The one exception is `zero-shot/edge-case/`, which
 *runs* both models itself, reusing Chronos2's shared harness.) All use the identical gluonts
 pipeline / 25 Benchmark II datasets / cap=1000 / bf16, so the comparison is apples-to-apples.
+
+## Deliverable notebook (start here)
+
+[`Chronos2_vs_ChronosT5_HeadToHead.ipynb`](Chronos2_vs_ChronosT5_HeadToHead.ipynb) tells the
+whole C2-vs-T5 story end-to-end: aggregated relative score, leaderboard, per-dataset
+dominance, cross-learning, efficiency, the one-shot (LoRA) tie, and the 7-setting summary.
+It runs on **CPU with no model download** — every number is recomputed from the committed
+result CSVs and every figure is a committed PNG, so it executes anywhere the repo is checked
+out. Rebuild it with:
+
+```powershell
+conda activate chronos_bench
+python make_comparison_notebook.py --execute   # writes + runs the notebook (outputs embedded)
+```
+
+(This is the comparison layer's counterpart to each engine project's own notebook and to
+`zero-shot/edge-case/Chronos2_EdgeCase_Robustness.ipynb`.)
 
 ## zero-shot/
 
@@ -80,5 +99,31 @@ not size, decides the damage).
 
 ## one-shot/
 
-Placeholder for the one-shot head-to-head (Chronos-T5 one-shot fine-tuning already
-exists in `Chronos_benchmark`; the Chronos-2 fine-tuning counterpart is future work).
+The one-shot (LoRA fine-tuned) head-to-head, **done and reported**. Both models are
+LoRA-tuned under an identical HPO protocol and the identical gluonts eval, **univariate
+on both sides**, over the 25 Benchmark II datasets (C2 cross-learning is kept only as a
+C2 self-ceiling reference). See [`one-shot/README.md`](one-shot/README.md) for the full
+script/phase map.
+
+| file | what |
+| --- | --- |
+| `scripts/hpo.py --model {c2,t5}` | phase 3 — val-based HPO (lr / rank / context) |
+| `scripts/final_run.py --model {c2,t5}` | phase 4 — train all 25 with the best config + univariate eval |
+| `scripts/head_to_head.py` | phase 5 — C2-uni vs T5-uni head-to-head → `results/head_to_head.csv`, `reports/HEAD_TO_HEAD_REPORT.md`, `plots/` |
+| `scripts/phase6_cltrain.py` | phase 6 — train-time cross-learning C2 (C2-only, not head-to-head) |
+| `scripts/summary_matrix.py` | all-7-settings per-dataset + aggregate heatmap |
+| `reports/HEAD_TO_HEAD_REPORT.md` | the head-to-head result + figures |
+
+```powershell
+conda activate chronos_bench
+cd one-shot
+python scripts/hpo.py --model c2 ; python scripts/hpo.py --model t5   # phase 3
+python scripts/final_run.py --model c2 ; python scripts/final_run.py --model t5   # phase 4
+python scripts/head_to_head.py        # phase 5 -> reports/HEAD_TO_HEAD_REPORT.md
+python scripts/summary_matrix.py      # 7-setting heatmap
+```
+
+**Headline:** once *both* models are LoRA fine-tuned they are a **statistical tie** —
+C2-uni vs T5-uni is within noise (MASE gmean(C2/T5) 1.067, Wilcoxon p = 0.12; WQL 1.053,
+p = 0.65). Fine-tuning does not change the winner, so **C2 does not need fine-tuning**;
+its real advantage over T5 is the **zero-shot + cross-learning** regime above.
