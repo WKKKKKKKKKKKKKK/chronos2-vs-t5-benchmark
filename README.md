@@ -168,6 +168,11 @@ tourism, health, banking). Loaded from `autogluon/chronos_datasets`.
 - Ansari et al., *Chronos-2* technical report, 2025 (arXiv:2510.15821).
 - Upstream: https://github.com/amazon-science/chronos-forecasting
 
+## License
+
+Released under the **Apache License 2.0** — see [`LICENSE`](LICENSE). This matches the
+upstream `chronos-forecasting` license.
+
 ---
 
 *Author: Weikang Kong (KAUST). Research benchmark for model-selection guidance.*

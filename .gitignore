@@ -4,6 +4,7 @@
 # --- keep only these top-level items ---
 !/.gitignore
 !/README.md
+!/LICENSE
 !/Chronos2/
 !/Chronos_benchmark/
 !/chronos2_t5/
