@@ -32,7 +32,7 @@ def main():
     labels = list(configs)
     colors = ["#8ecae6", "#219ebc"]
 
-    fig, axes = plt.subplots(1, 2, figsize=(8, 4.2))
+    fig, axes = plt.subplots(1, 2, figsize=(9, 4.6))
     for ax, metric in zip(axes, ["WQL", "MASE"]):
         vals = [configs[k][metric] for k in labels]
         bars = ax.bar(labels, vals, color=colors, width=0.6)
@@ -41,7 +41,7 @@ def main():
         for b, v in zip(bars, vals):
             ax.text(b.get_x() + b.get_width() / 2, v, f"{v:.3f}", ha="center", va="bottom", fontsize=10)
         drop = (vals[0] - vals[1]) / vals[0] * 100      # cross-learning improvement over univariate
-        ax.set_title(f"zero-shot {metric}  (cross-learning {drop:.1f}% lower than univariate)", fontsize=10)
+        ax.set_title(f"zero-shot {metric}\n(cross-learning {drop:.1f}% lower than univariate)", fontsize=10)
         ax.set_ylim(0, max(vals) * 1.18)
         ax.grid(axis="y", alpha=0.3)
     fig.suptitle("Chronos-2 zero-shot on Benchmark II — cross-learning vs univariate\n"
