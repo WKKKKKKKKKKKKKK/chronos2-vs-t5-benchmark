@@ -35,7 +35,7 @@ from scipy.stats import gmean
 
 HERE = Path(__file__).resolve().parent          # .../zero-shot/scripts
 ZS = HERE.parent                                 # .../zero-shot (output root)
-ROOT = HERE.parents[2]                            # .../SAUDI_ARAMCO
+ROOT = HERE.parents[2]                            # repo root
 OUT = ZS / "benchmark"
 ONESHOT = ROOT / "chronos2_t5" / "one-shot" / "results"
 SN = pd.read_csv(ROOT / "Chronos_benchmark" / "reference" / "seasonal-naive-zero-shot.csv").set_index("dataset")

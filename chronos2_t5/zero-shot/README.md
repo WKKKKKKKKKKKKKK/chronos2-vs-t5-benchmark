@@ -29,7 +29,7 @@ Scripts only READ the per-model result CSVs produced by the sibling projects
 | `scripts/plot_crosslearning_io.py` | yes | `crosslearning_io/` |
 
 Path convention (all scripts): `HERE` = `scripts/`, `ZS` = this `zero-shot/` dir (output root),
-`ROOT` = repo root (`SAUDI_ARAMCO`).
+`ROOT` = repo root.
 
 ## Headline (aggregate, rel. Seasonal-Naive skill, 25 datasets)
 

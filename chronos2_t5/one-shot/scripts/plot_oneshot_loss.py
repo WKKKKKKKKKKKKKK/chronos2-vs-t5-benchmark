@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 ONESHOT = Path(__file__).resolve().parents[1]       # .../chronos2_t5/one-shot
-ROOT = ONESHOT.parents[1]                            # .../SAUDI_ARAMCO (repo root)
+ROOT = ONESHOT.parents[1]                            # repo root
 PLOTS = ONESHOT / "plots"
 T5_FT = ROOT / "Chronos_benchmark" / "models" / "ft_oneshot"
 C2_FT = ROOT / "Chronos2" / "models" / "ft_oneshot"

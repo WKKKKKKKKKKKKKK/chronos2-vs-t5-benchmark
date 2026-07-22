@@ -28,7 +28,7 @@ from gluonts.dataset.split import split
 from scipy.stats import gmean
 
 ONESHOT = Path(__file__).resolve().parents[1]   # .../chronos2_t5/one-shot
-ROOT = ONESHOT.parents[1]                        # .../SAUDI_ARAMCO
+ROOT = ONESHOT.parents[1]                        # repo root
 RESULTS = ONESHOT / "results"
 REPORTS = ONESHOT / "reports"
 BEST = dict(lr=1e-3, rank=16, ctx=512)     # C2 HPO winner (same as Phase 4)

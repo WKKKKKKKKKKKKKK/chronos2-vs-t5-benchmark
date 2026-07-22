@@ -29,7 +29,7 @@ import pandas as pd
 from scipy.stats import gmean, wilcoxon
 
 ONESHOT = Path(__file__).resolve().parents[1]   # .../chronos2_t5/one-shot
-ROOT = ONESHOT.parents[1]                        # .../SAUDI_ARAMCO
+ROOT = ONESHOT.parents[1]                        # repo root
 RESULTS = ONESHOT / "results"
 REPORTS = ONESHOT / "reports"
 PLOTS = ONESHOT / "plots"

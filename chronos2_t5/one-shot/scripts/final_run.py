@@ -21,7 +21,7 @@ import torch
 from gluonts.dataset.split import split
 
 ONESHOT = Path(__file__).resolve().parents[1]   # .../chronos2_t5/one-shot
-ROOT = ONESHOT.parents[1]                        # .../SAUDI_ARAMCO
+ROOT = ONESHOT.parents[1]                        # repo root
 RESULTS = ONESHOT / "results"
 
 BEST = {"c2": dict(lr=1e-3, rank=16, ctx=512),

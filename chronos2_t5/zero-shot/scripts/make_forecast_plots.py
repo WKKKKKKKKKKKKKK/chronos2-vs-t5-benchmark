@@ -32,7 +32,7 @@ import datasets as hfds
 
 HERE = Path(__file__).resolve().parent          # .../zero-shot/scripts
 ZS = HERE.parent                                 # .../zero-shot (output root)
-ROOT = HERE.parents[2]                            # .../SAUDI_ARAMCO
+ROOT = HERE.parents[2]                            # repo root
 sys.path.insert(0, str(ROOT / "Chronos2" / "src"))                # config, datasets_lib (src root)
 sys.path.insert(0, str(ROOT / "Chronos2" / "src" / "zero_shot"))  # run_zeroshot_chronos2.py (shared harness)
 import run_zeroshot_chronos2 as R2          # to_gluonts_univariate / HF_REPO / MAX_SERIES / DTYPE / MODEL_ID / CROSS_LEARNING_BATCH
