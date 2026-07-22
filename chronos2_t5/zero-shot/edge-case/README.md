@@ -23,7 +23,7 @@ Run every script from this directory with the `chronos_bench` conda env.
 | `_cl_rescue_quick.py` | probe: does a clean related-series group rescue a corrupted target | → `results/_cl_rescue_full.csv` |
 | `_measure_width.py` | 80% prediction-interval width, C2-uni vs T5 | → `results/_interval_width.csv` |
 | `make_edgecase_notebook.py` | rebuilds `Chronos2_EdgeCase_Robustness.ipynb` | — |
-| `results/` | all CSV outputs + `EDGE_CASE_REPORT.md` + `fig_degradation_curves.png` + per-dataset `examples/` | `run_edge_cases.py` |
+| `results/` | all CSV outputs + `EDGE_CASE_REPORT.md` + `fig_degradation_curves.png` (relative) + `fig_absolute_curves.png` (absolute, 1:1 counterpart) + per-dataset `examples/` | `run_edge_cases.py` |
 | `plots/` | **report figures** — see below | `_mk_three_config.py`, `_mk_examples.py` |
 
 ## Report figures (`plots/`)

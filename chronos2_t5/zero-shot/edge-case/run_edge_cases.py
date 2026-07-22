@@ -27,7 +27,8 @@ Faithfulness to the sibling projects:
 Outputs (chronos2_t5/zero-shot/edge-case/results/):
   edge_case_results.csv     per (dataset, model, perturbation, severity): MASE/WQL + degradation
   EDGE_CASE_REPORT.md       robustness summary + per-family degradation + per-dataset tables
-  fig_degradation_curves.png   degradation vs severity, per family, both metrics, both models
+  fig_degradation_curves.png   RELATIVE degradation (x clean) vs severity, per family, both metrics
+  fig_absolute_curves.png      ABSOLUTE MASE/WQL vs severity (same 2x6 layout) — accuracy counterpart
   examples/<dataset>/<category>.png   per-series figures (clean + 3 severities) for each category
 """
 import sys
@@ -238,6 +239,7 @@ def run():
     print(f"\nSaved -> {OUT / 'edge_case_results.csv'}")
     _write_report(df)
     _plot_degradation(df)
+    _plot_absolute(df)
     # per-series example figures for the showcase datasets (rebuild just their clean series)
     for ds in EXAMPLE_DATASETS:
         H = dict(EDGE_DATASETS)[ds]
@@ -380,8 +382,16 @@ def _write_report(df: pd.DataFrame):
         "* The clean-context accuracy gap (T5 vs C2) is *not* what this study measures — it lives in "
         "the sibling `chronos2_t5/zero-shot/` head-to-head. Here every score is normalised by each "
         "model's own clean baseline, so the comparison is purely about *robustness*.\n",
-        "\nFigures: `fig_degradation_curves.png` (degradation vs severity, 2x6: spikes split into "
-        "intensity & density, both drift variants, and the gap at random vs boundary positions). "
+        "\nFigures: `fig_degradation_curves.png` (RELATIVE degradation = metric / clean, 2x6: spikes "
+        "split into intensity & density, both drift variants, and the gap at random vs boundary "
+        "positions) and its one-to-one accuracy counterpart `fig_absolute_curves.png` (the same 2x6 "
+        "panels but plotting the ABSOLUTE MASE/WQL, with each model's clean baseline as a dotted "
+        "reference line). The two are complementary and can disagree: the ratio figure measures "
+        "*robustness* (how much each model degrades from its own baseline, which favours the model "
+        "with the higher clean error) while the absolute figure measures *accuracy on corrupted "
+        "input* (what deployment cares about). Chronos-2's lower clean baseline is why it can look "
+        "less robust in the ratio view yet stay more accurate in absolute terms — e.g. on missing "
+        "(random) C2's ratio sits above T5's while its absolute WQL stays below. "
         "Per-series example figures live in `examples/<dataset>/` for "
         f"{', '.join(EXAMPLE_DATASETS)} — six figures each (`spikes_intensity.png`, "
         "`spikes_density.png`, `drift_ramp.png`, `level_shift.png`, `missing_random.png`, "
@@ -437,6 +447,57 @@ def _plot_degradation(df: pd.DataFrame):
     # No suptitle / no on-image caption — the descriptive caption lives in the document (LaTeX).
     fig.tight_layout(rect=[0, 0, 1, 0.92])
     fig.savefig(OUT / "fig_degradation_curves.png", dpi=130, bbox_inches="tight")
+    plt.close(fig)
+
+
+def _plot_absolute(df: pd.DataFrame):
+    """Absolute MASE/WQL vs severity — the accuracy counterpart of fig_degradation_curves.png.
+
+    Same 2x6 layout and the same severities, one-to-one with the degradation figure; the only
+    difference is the y-axis. Where fig_degradation_curves.png divides each model by its OWN clean
+    baseline (so both curves start at 1.0 and are NOT on a shared scale), this plots the raw
+    gmean-across-datasets metric, so the two models sit on ONE directly-comparable scale and their
+    differing clean baselines are visible (dotted horizontal reference line per model, colour-matched).
+
+    The two figures answer different questions and can even show opposite winners: the ratio figure
+    asks "how much does each model degrade from itself" (robustness — favours the model with the
+    higher clean error, since its denominator is larger), while this one asks "which model is actually
+    more accurate on the corrupted input" (deployment). Chronos-2's lower clean baseline is exactly
+    why it can look less robust in the ratio view yet remain more accurate in absolute terms.
+    """
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    short_fam = {"spikes_intensity": "Spikes (intensity)", "spikes_density": "Spikes (density)",
+                 "drift": "Drift (ramp)", "drift_step": "Level shift (segment)",
+                 "gap": "Missing (random)", "gap_boundary": "Missing (boundary)"}
+    colors = {"chronos-2": "C3", "chronos-t5": "C0"}
+    disp = {"chronos-2": "Chronos-2", "chronos-t5": "Chronos-T5"}
+    nfam = len(FAMILIES)
+    fig, axes = plt.subplots(2, nfam, figsize=(5.2 * nfam, 9.2))
+    for j, fam in enumerate(FAMILIES):
+        sevs = SEVERITIES[fam]
+        for i, (metric, col) in enumerate([("MASE", "MASE"), ("WQL", "WQL")]):
+            ax = axes[i, j]
+            for model in ["chronos-2", "chronos-t5"]:
+                y = [_agg_degr(df, model, fam, s, col) for s in sevs]   # gmean of the ABSOLUTE metric
+                ax.plot(sevs, y, "o-", color=colors[model], lw=2.4, ms=8, label=disp[model])
+                base = _agg_degr(df, model, "clean", 0.0, col)          # each model's clean baseline
+                ax.axhline(base, color=colors[model], ls=":", lw=1.4, alpha=0.6)
+            # Title in the top-left corner so it never collides with the shared legend.
+            ax.text(0.035, 0.955, short_fam[fam], transform=ax.transAxes,
+                    ha="left", va="top", fontsize=23, fontweight="bold",
+                    bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="0.7", alpha=0.85))
+            ax.set_xlabel("severity", fontsize=22)
+            ax.set_ylabel(f"{metric} (absolute)", fontsize=21)
+            ax.tick_params(axis="both", labelsize=20)
+            ax.grid(alpha=0.3)
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.995),
+               ncol=2, fontsize=26, frameon=True)
+    fig.tight_layout(rect=[0, 0, 1, 0.92])
+    fig.savefig(OUT / "fig_absolute_curves.png", dpi=130, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -667,6 +728,7 @@ def report_only():
         df = _add_degradation(df)
     _write_report(df)
     _plot_degradation(df)
+    _plot_absolute(df)
     print(f"Regenerated report + degradation curve -> {OUT}")
 
 
@@ -757,6 +819,7 @@ def add_family(fam):
     df.to_csv(OUT / "edge_case_results.csv", index=False)
     _write_report(df)
     _plot_degradation(df)
+    _plot_absolute(df)
     print(f"\nAdded family '{fam}' -> CSV + report + degradation curve regenerated in {OUT}")
 
 
