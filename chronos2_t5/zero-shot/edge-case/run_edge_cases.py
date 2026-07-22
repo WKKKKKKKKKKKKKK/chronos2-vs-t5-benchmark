@@ -403,8 +403,19 @@ def _write_report(df: pd.DataFrame):
         "(harmless) while `missing_boundary` pins it to the context|horizon junction (the harmful, "
         "most-recent-dropout case) — the contrast shows that placement, not size, decides the damage.\n",
     ]
-    (OUT / "EDGE_CASE_REPORT.md").write_text("\n".join(md), encoding="utf-8")
-    print(f"Saved -> {OUT / 'EDGE_CASE_REPORT.md'}")
+    report_path = OUT / "EDGE_CASE_REPORT.md"
+    body = "\n".join(md)
+    # Preserve a hand-written "## Addendum ..." tail: this function rebuilds the report from the
+    # CSV and does NOT generate the addendum (the cross-learning robustness write-up), so a naive
+    # rewrite would silently drop it. If the current report has one, carry it over verbatim.
+    if report_path.exists():
+        prev = report_path.read_text(encoding="utf-8")
+        idx = prev.find("\n## Addendum")
+        if idx != -1:
+            body = body.rstrip() + "\n\n" + prev[idx:].lstrip("\n")
+    # Force LF (newline="\n") so re-running on Windows does not flip the file to CRLF.
+    report_path.write_text(body, encoding="utf-8", newline="\n")
+    print(f"Saved -> {report_path}")
 
 
 def _plot_degradation(df: pd.DataFrame):
