@@ -3,15 +3,15 @@
 The **comparison** project, parallel to the two model projects:
 
 ```
-d:\KAUST\SAUDI_ARAMCO\
-├── Chronos2\          # Chronos-2 zero-shot (its own results + vs the Chronos-2 paper)
-├── Chronos_benchmark\ # Chronos-T5 zero-shot + one-shot reproduction
-└── chronos2_t5\       # THIS: head-to-head Chronos-2 vs Chronos-T5
+<repo-root>/
+├── Chronos2/          # Chronos-2 zero-shot (its own results + vs the Chronos-2 paper)
+├── Chronos_benchmark/ # Chronos-T5 zero-shot + one-shot reproduction
+└── chronos2_t5/       # THIS: head-to-head Chronos-2 vs Chronos-T5
     ├── Chronos2_vs_ChronosT5_HeadToHead.ipynb  # ← START HERE: the whole comparison, one notebook
     ├── make_comparison_notebook.py             # (re)builds that notebook from the committed CSVs
-    ├── zero-shot\
-    │   └── edge-case\ # corrupted-sensor robustness study (runs both models)
-    └── one-shot\
+    ├── zero-shot/
+    │   └── edge-case/ # corrupted-sensor robustness study (runs both models)
+    └── one-shot/
 ```
 
 The head-to-head artifacts **do not** run/own a model — they read the per-dataset results the

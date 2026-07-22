@@ -318,7 +318,7 @@ def run_model(model_id, folder, kind, title):
     fig.legend(h, l, loc="upper center", bbox_to_anchor=(0.5, 0.955), ncol=4, fontsize=12)
     fig.tight_layout(rect=[0, 0, 1, 0.925])
     fig.savefig(sub / "_overview_grid.png", dpi=110, bbox_inches="tight"); plt.show()
-    print(f"Saved {len(res)} plots -> {sub}")
+    print(f"Saved {len(res)} plots -> {sub.relative_to(ROOT)}")
 
 run_model(R2.MODEL_ID, "chronos2", "c2", "Chronos-2 forecasts")''')
 

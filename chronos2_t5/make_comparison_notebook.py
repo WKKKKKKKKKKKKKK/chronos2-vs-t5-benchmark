@@ -97,7 +97,7 @@ def show(path, width=760):
                          f"regenerate with the script noted above)*"))
 
 pd.set_option("display.float_format", lambda v: f"{v:,.4f}")
-print("repo root :", ROOT)
+print("repo root located (Chronos2 / Chronos_benchmark / chronos2_t5 found)")
 print("C2 results:", (C2 / "results").exists(), "| T5 results:", (T5 / "results").exists())''')
 
 # --------------------------------------------------------------------------- #

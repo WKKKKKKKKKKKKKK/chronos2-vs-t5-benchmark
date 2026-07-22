@@ -32,7 +32,7 @@ from scipy.stats import gmean
 
 HERE = Path(__file__).resolve().parent          # .../zero-shot/scripts
 ZS = HERE.parent                                 # .../zero-shot (output root)
-ROOT = HERE.parents[2]                            # d:\KAUST\SAUDI_ARAMCO
+ROOT = HERE.parents[2]                            # .../SAUDI_ARAMCO (repo root)
 C2 = ROOT / "Chronos2"
 BENCH = ROOT / "Chronos_benchmark"
 
