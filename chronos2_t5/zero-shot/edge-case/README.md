@@ -39,6 +39,7 @@ These produce every number in the write-up. Run order and timings are in
 | `analyse_cl_shuffle.py` | C4 — gain by sibling condition, paired arm contrasts | no | `CL_SHUFFLE_ANALYSIS_*.md`, `fig_cl_shuffle_*.png` |
 | `analyse_cl_sensitivity.py` | C4 — does that gain survive without the four datasets holding fewer than 100 series? Imports its statistics from `analyse_cl_shuffle.py` so the two cannot drift | no | `CL_SENSITIVITY_ANALYSIS.md` |
 | `analyse_decode_ablation.py` | C2b — slope per decode seed, and after averaging the sampler down | no | `DECODE_ABLATION_*.md`, `fig_decode_ablation_*.png` |
+| `measure_homogeneity.py` | mean within-dataset series correlation. Written to test one explanation offered for C4 — and it **refuted** it, so the claim is not in the paper; kept so the removal leaves a trace | no | `HOMOGENEITY.md` |
 | `mk_fig_suite.py` | one-figure overview of the corruption families, PNG and vector PDF | no | `fig_corruption_suite.{png,pdf}` |
 | `analyse_regime.py` | C5 — slope on the new family, matched-pair vs `drift`, effect-size-matched control | no | `REGIME_ANALYSIS_*.md`, `fig_regime_*.png` |
 

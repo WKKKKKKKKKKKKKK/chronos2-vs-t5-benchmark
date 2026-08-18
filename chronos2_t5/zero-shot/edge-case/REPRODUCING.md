@@ -21,7 +21,8 @@ instrumentation of the Chronos-T5 tokeniser, a cross-learning sibling-shuffle co
 its small-dataset sensitivity check, a seventh corruption family with an
 effect-size-matched control, a decode-only ablation that rules out sampling noise, and one
 statistics module that every reported p-value must come from. It does not modify any result on `main` --
-the only edits to existing files are three registry lines and some documentation.
+the edits to existing files are three registry lines, one `DECODE_SEED` global that
+decouples Chronos-T5's decode from the corruption draw, and documentation.
 
 ## 2. Environment
 
@@ -159,9 +160,12 @@ membership. Restricting to the 21 full-size datasets moves the two halves of C4 
 So "only the native group clears 1" survives on WQL but not on MASE once the four are
 removed, while the frequency contrast gets sharply stronger, because the
 different-frequency gain falls below 1 (0.986 WQL) without them. Report both columns.
-Dropping the four *lowers* the native gain even though their groups are the smallest,
-which points at within-collection homogeneity rather than group size as the active
-ingredient.
+Dropping the four *lowers* the native gain even though their groups are the smallest.
+A draft explained that by within-collection homogeneity; `measure_homogeneity.py` tested
+the explanation and **refuted** it -- `monash_cif_2016` carries almost the whole effect
+(own-dataset gain 1.395, the largest in the suite) yet ranks 23rd of 25 for internal
+correlation. The paper therefore reports the phenomenon, and the fact that C4's point
+estimate leans on one collection, without a mechanism.
 
 | | |
 | --- | --- |
@@ -169,6 +173,7 @@ ingredient.
 | raw | `results/crosslearning_shuffle.csv` |
 | narrative + figure | `analyse_cl_shuffle.py --metric WQL` -> `results/CL_SHUFFLE_ANALYSIS_WQL.md`, `results/fig_cl_shuffle_WQL.png` |
 | sensitivity | `analyse_cl_sensitivity.py` -> `results/CL_SENSITIVITY_ANALYSIS.md` (both metrics, both subsets, one file) |
+| refuted explanation | `measure_homogeneity.py` -> `results/HOMOGENEITY.md`. Supports no claim; it is the record of one that was withdrawn |
 
 ### C5 -- the undersensitivity is specific to observation-level magnitude
 
@@ -237,7 +242,7 @@ python run_seeds.py --families regime_trend --seeds 0,1,2,3 \
        --severities 0.01,0.02,0.04,0.06,0.09,0.13,0.18,0.25 \
        --out edge_case_regime_low.csv
 
-# 6. decode-only ablation, Chronos-T5 x 8 decode seeds   GPU  ~80 min (estimated)
+# 6. decode-only ablation, Chronos-T5 x 8 decode seeds   GPU  ~96 min (measured)
 python run_decode_ablation.py
 #    -> results/decode_ablation.csv
 
@@ -252,10 +257,11 @@ for m in WQL MASE; do
   python analyse_decode_ablation.py --metric $m
 done
 python analyse_cl_sensitivity.py     # -> results/CL_SENSITIVITY_ANALYSIS.md (both metrics)
+python measure_homogeneity.py        # -> results/HOMOGENEITY.md  (~2 min, reads the registry)
 python mk_fig_suite.py               # -> results/fig_corruption_suite.{png,pdf}
 ```
 
-## 5. Six ways to get this silently wrong
+## 5. Eight ways to get this silently wrong
 
 Each of these produced a wrong answer at some point during the study. They are listed
 because none of them raises an error -- they all return plausible numbers.
@@ -282,6 +288,21 @@ because none of them raises an error -- they all return plausible numbers.
 
 6. **`results/clamping_measurements_smoke.csv` is not data.** It is a 4-dataset trial run,
    left untracked on purpose. Do not analyse it.
+
+7. **A killed run leaves rows behind, and resume will not notice.** The decode ablation was
+   smoke-tested, the process was killed on a timeout after it had already written cells,
+   and the full run then appended the same cells again -- 2244 rows where 2200 were
+   expected. The duplicates were byte-identical so dropping them was lossless, but nothing
+   warned about it. After any interrupted run, check the row count against
+   `seeds x datasets x conditions` before analysing, and verify duplicates agree before
+   de-duplicating.
+
+8. **Aligning series to the shortest member of a collection destroys the collection.** The
+   first version of `measure_homogeneity.py` truncated every series in a dataset to the
+   length of its shortest, so one short series collapsed the usable window for all of them:
+   six datasets returned NaN -- including the one that decided the question -- and a yearly
+   collection returned no usable series at all. It raised no error. Alignment is now per
+   pair, so a short series only costs the pairs it appears in.
 
 ## 6. Naming
 
