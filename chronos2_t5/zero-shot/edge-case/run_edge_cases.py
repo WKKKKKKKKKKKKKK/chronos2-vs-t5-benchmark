@@ -87,6 +87,11 @@ EXAMPLE_FIGS = [
     ("missing_boundary", "Missing chunk - at context|horizon boundary",  [0.10, 0.20, 0.30], "{:.0%}"),
 ]
 SEED = 0                     # perturbation RNG + Chronos-T5 sample seed
+# Chronos-T5's 20-sample decode is seeded from SEED, so SEED moves the corruption draw and
+# the decode together -- correct for a run-to-run error bar, useless for asking which of
+# the two produces an effect. Set DECODE_SEED to decouple them: the corruption still comes
+# from SEED, the decode from DECODE_SEED. None means "follow SEED", i.e. previous behaviour.
+DECODE_SEED = None
 BATCH = 32                   # manual forecast batch size (Chronos-T5 predict has no batch_size kwarg)
 
 MODELS = [                   # (label, hf id, kind) ; kind drives the predict_quantiles call
@@ -174,7 +179,7 @@ def forecast(pipe, contexts, starts, horizon, kind):
         tensors = [torch.tensor(np.asarray(c, dtype=np.float32)) for c in chunk]
         kw = dict(prediction_length=horizon, quantile_levels=R2.QUANTILES)
         if kind == "t5":
-            torch.manual_seed(SEED)
+            torch.manual_seed(SEED if DECODE_SEED is None else DECODE_SEED)
             kw["num_samples"] = 20
         else:
             kw["limit_prediction_length"] = False
