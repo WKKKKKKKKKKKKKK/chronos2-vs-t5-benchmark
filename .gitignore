@@ -26,6 +26,8 @@ _recover/
 *.tmp
 *.log
 gpu_usage.csv
+# smoke-test outputs (2 datasets, one family -- a quick check, not a result)
+*_smoke.csv
 # OS
 .DS_Store
 Thumbs.db
