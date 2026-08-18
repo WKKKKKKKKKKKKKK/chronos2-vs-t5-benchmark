@@ -32,10 +32,14 @@ These produce every number in the write-up. Run order and timings are in
 | `run_seeds.py` | re-runs chosen families under further seeds; `--out` and `--severities` let a new family or grid go to its own file | yes | `results/edge_case_seeds.csv`, `results/edge_case_regime*.csv` |
 | `measure_clamping.py` | instruments the Chronos-T5 tokeniser directly — what it admits, clamps, rescales | no | `results/clamping_measurements.csv` |
 | `run_cl_shuffle.py` | cross-learning sibling shuffle: native / foreign-same-freq / foreign-diff-freq | yes | `results/crosslearning_shuffle.csv` |
+| `run_decode_ablation.py` | holds the corruption fixed and sweeps Chronos-T5's decode seed only — is the flat slope sampling noise? | yes | `results/decode_ablation.csv` |
 | `statistics.py` | **the single source of truth for every p-value.** Fixes analysis unit, pairing and multiplicity; reports both metrics | no | `results/STATISTICS.md` |
 | `analyse_seeds.py` | C1 — per-curve monotonicity, held-out recovery test | no | `SEED_ANALYSIS_*.md`, `fig_seed_curves_*.png` |
 | `analyse_clamping.py` | C2 — do the candidate mechanisms predict recovery? (they do not) | no | `CLAMPING_ANALYSIS_*.md`, `fig_clamping_mechanism_*.png` |
 | `analyse_cl_shuffle.py` | C4 — gain by sibling condition, paired arm contrasts | no | `CL_SHUFFLE_ANALYSIS_*.md`, `fig_cl_shuffle_*.png` |
+| `analyse_cl_sensitivity.py` | C4 — does that gain survive without the four datasets holding fewer than 100 series? Imports its statistics from `analyse_cl_shuffle.py` so the two cannot drift | no | `CL_SENSITIVITY_ANALYSIS.md` |
+| `analyse_decode_ablation.py` | C2b — slope per decode seed, and after averaging the sampler down | no | `DECODE_ABLATION_*.md`, `fig_decode_ablation_*.png` |
+| `mk_fig_suite.py` | one-figure overview of the corruption families, PNG and vector PDF | no | `fig_corruption_suite.{png,pdf}` |
 | `analyse_regime.py` | C5 — slope on the new family, matched-pair vs `drift`, effect-size-matched control | no | `REGIME_ANALYSIS_*.md`, `fig_regime_*.png` |
 
 ### Original sweep and report figures

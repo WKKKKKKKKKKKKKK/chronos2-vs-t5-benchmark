@@ -4,7 +4,7 @@ Everything the paper claims, mapped to the command that produces it and the file
 in. Read sections 1 and 2, then either jump to section 3 to check a specific number
 against its source, or run section 4 top to bottom to rebuild everything from scratch.
 
-**Total cost from nothing: about 5 GPU-hours on one laptop GPU** (RTX 3500 Ada, 12.9 GB).
+**Total cost from nothing: about 6 GPU-hours on one laptop GPU** (RTX 3500 Ada, 12.9 GB).
 No cluster is needed and none was used. The study is inference-only over 46M- and
 120M-parameter models at 100 series per dataset.
 
@@ -17,9 +17,10 @@ and one-shot benchmark, and the first corruption sweep. That state is tagged
 `v1.0-internship`.
 
 This branch adds the follow-up work behind the paper: multi-seed replication, direct
-instrumentation of the Chronos-T5 tokeniser, a cross-learning sibling-shuffle control, a
-seventh corruption family with an effect-size-matched control, and one statistics module
-that every reported p-value must come from. It does not modify any result on `main` --
+instrumentation of the Chronos-T5 tokeniser, a cross-learning sibling-shuffle control and
+its small-dataset sensitivity check, a seventh corruption family with an
+effect-size-matched control, a decode-only ablation that rules out sampling noise, and one
+statistics module that every reported p-value must come from. It does not modify any result on `main` --
 the only edits to existing files are three registry lines and some documentation.
 
 ## 2. Environment
@@ -85,6 +86,31 @@ opposite to the blindness account.
 | statistics | `statistics.py` -> family `C2/refutation` |
 | narrative + figure | `analyse_clamping.py --metric WQL` -> `results/CLAMPING_ANALYSIS_spikes_intensity_WQL.md`, `results/fig_clamping_mechanism_spikes_intensity_WQL.png` |
 
+### C2b -- the flat slope is not an artefact of the stochastic decode
+
+Chronos-T5 draws 20 sample paths per forecast while Chronos-2 emits quantiles in one
+deterministic pass, so sampling noise could in principle bury a real but shallow slope.
+`DECODE_SEED` decouples the decode from the corruption draw, which makes this a genuine
+single-variable manipulation: the corrupted contexts are fingerprinted and verified
+byte-identical across runs, and only `torch.manual_seed` moves. Chronos-2 is not re-run --
+a decode seed does nothing to a deterministic head.
+
+| | rho vs spike magnitude | 95% CI | datasets positive |
+| --- | --- | --- | --- |
+| single decode seed | -0.019 | [-0.189, +0.155] | 11/25 |
+| averaged over 8 decode seeds | +0.022 | [-0.168, +0.215] | 13/25 |
+
+Averaging cuts sampler noise by about sqrt(8) and the slope stays indistinguishable from
+zero (paired change over 25 datasets, p = 0.059). **Decode is excluded.** As a by-product,
+the median s.d. across decode seeds alone is 0.043 against 0.065 across corruption *and*
+decode seeds -- indicative only, since that run supplies 3 seeds against 8 here.
+
+| | |
+| --- | --- |
+| produced by | `run_decode_ablation.py` (Chronos-T5 only, spike-magnitude family only) |
+| raw | `results/decode_ablation.csv` (2200 rows, 8 decode seeds x 25 datasets) |
+| narrative + figure | `analyse_decode_ablation.py --metric WQL` -> `results/DECODE_ABLATION_WQL.md`, `results/fig_decode_ablation_WQL.png` |
+
 ### C3 -- damage is governed by displacement *at* the forecast origin (PARTIAL)
 
 Supported so far: the contrast between origin-pinned and randomly placed corruption in the
@@ -116,11 +142,33 @@ absent from the same-frequency arm by construction: `monash_australian_electrici
 (subhourly only) and `monash_traffic` (pool held 8 series, below the 99 required). Both are
 reported in the analysis output rather than dropped silently.
 
+**The gain is not evenly spread, and the table above must not be quoted alone.** Four
+datasets hold fewer than the 100 series a group can take (`monash_australian_electricity`
+5, `ercot` 8, `exchange_rate` 8, `monash_cif_2016` 72). A target grouped with its own
+dataset gets a group of whatever size that dataset has, while both foreign conditions are
+always filled to 100, so for these four the contrast varies group size as well as group
+membership. Restricting to the 21 full-size datasets moves the two halves of C4 in
+*opposite* directions:
+
+| | 25 datasets | 21 full-size datasets |
+| --- | --- | --- |
+| native gain, WQL | 1.045 [1.012, 1.085], 18/25, p = 0.022 | 1.032 [1.002, 1.067], 14/21, p = 0.095 |
+| native gain, MASE | 1.022 [1.003, 1.043] | **1.018 [0.997, 1.038] -- CI no longer clears 1** |
+| same- vs different-frequency, Holm | 0.030 (WQL) / 0.150 (MASE) | **0.0004 (WQL) / 0.058 (MASE)** |
+
+So "only the native group clears 1" survives on WQL but not on MASE once the four are
+removed, while the frequency contrast gets sharply stronger, because the
+different-frequency gain falls below 1 (0.986 WQL) without them. Report both columns.
+Dropping the four *lowers* the native gain even though their groups are the smallest,
+which points at within-collection homogeneity rather than group size as the active
+ingredient.
+
 | | |
 | --- | --- |
 | produced by | `run_cl_shuffle.py` |
 | raw | `results/crosslearning_shuffle.csv` |
 | narrative + figure | `analyse_cl_shuffle.py --metric WQL` -> `results/CL_SHUFFLE_ANALYSIS_WQL.md`, `results/fig_cl_shuffle_WQL.png` |
+| sensitivity | `analyse_cl_sensitivity.py` -> `results/CL_SENSITIVITY_ANALYSIS.md` (both metrics, both subsets, one file) |
 
 ### C5 -- the undersensitivity is specific to observation-level magnitude
 
@@ -154,13 +202,14 @@ degree. Only on spike magnitude is it a difference of kind.
 
 ## 4. Run order
 
-Steps 1-5 are independent of one another; step 6 reads their outputs. Every runner appends
+Steps 1-6 are independent of one another; step 7 reads their outputs. Every runner appends
 per `(seed, dataset)` and skips what is already present, so any of them can be killed and
 restarted.
 
 Timings marked *(measured)* are wall-clock from the actual runs on the machine described
 above. The one marked *(estimated)* is extrapolated from the measured per-cell cost,
-because that sweep predates timing being recorded.
+because that sweep predates timing being recorded. Step 6 is likewise extrapolated, from
+its Chronos-T5 row count against the measured step 2.
 
 ```bash
 conda activate chronos_bench      # run everything from chronos2_t5/zero-shot/edge-case
@@ -188,7 +237,11 @@ python run_seeds.py --families regime_trend --seeds 0,1,2,3 \
        --severities 0.01,0.02,0.04,0.06,0.09,0.13,0.18,0.25 \
        --out edge_case_regime_low.csv
 
-# 6. analysis -- no GPU, seconds each
+# 6. decode-only ablation, Chronos-T5 x 8 decode seeds   GPU  ~80 min (estimated)
+python run_decode_ablation.py
+#    -> results/decode_ablation.csv
+
+# 7. analysis -- no GPU, seconds each
 python statistics.py                                  # -> results/STATISTICS.md
 for m in WQL MASE; do
   python analyse_seeds.py      --metric $m
@@ -196,7 +249,10 @@ for m in WQL MASE; do
   python analyse_cl_shuffle.py --metric $m
   python analyse_regime.py --csv edge_case_regime.csv     --metric $m
   python analyse_regime.py --csv edge_case_regime_low.csv --metric $m
+  python analyse_decode_ablation.py --metric $m
 done
+python analyse_cl_sensitivity.py     # -> results/CL_SENSITIVITY_ANALYSIS.md (both metrics)
+python mk_fig_suite.py               # -> results/fig_corruption_suite.{png,pdf}
 ```
 
 ## 5. Six ways to get this silently wrong
