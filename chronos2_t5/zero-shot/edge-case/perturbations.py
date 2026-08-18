@@ -18,6 +18,23 @@ All randomness is drawn from a caller-supplied ``numpy.random.Generator`` so a r
 fully reproducible. Magnitudes are expressed in units of each series' own robust scale
 (median absolute deviation, fallback std) so a given severity is comparable across
 datasets with wildly different units.
+
+NAMING. Four functions produce seven swept families, and the example figures historically
+used a SECOND set of names for four of them. Ten names, seven things. Canonical name is
+the sweep name (left column); the paper uses the right column.
+
+    sweep / results CSV   example figures      paper
+    -------------------   ------------------   ---------------------------
+    spikes_intensity      spikes_intensity     spike magnitude
+    spikes_density        spikes_density       spike density
+    drift                 drift_ramp           global drift
+    drift_step            level_shift          transient level shift
+    gap                   missing_random       dropout (random position)
+    gap_boundary          missing_boundary     dropout (at forecast origin)
+    regime_trend          --                   persistent trend change
+
+Do not introduce a fourth naming scheme. If a figure and a table appear to describe
+different experiments, this table is why.
 """
 from __future__ import annotations
 
@@ -29,7 +46,12 @@ import numpy as np
 SPIKE_FIX_FRAC = 0.05    # density held constant in the intensity sweep/figure
 SPIKE_FIX_MAG = 20.0     # magnitude (x scale) held constant in the density sweep/figure
 
-__all__ = ["robust_scale", "add_spikes", "add_drift", "add_step", "drop_chunk", "apply"]
+# Where the regime switch sits, as a fraction of context measured back from the forecast
+# origin. Held CONSTANT while severity is swept, so severity drives exactly one quantity.
+REGIME_SWITCH_FRAC = 0.25
+
+__all__ = ["robust_scale", "add_spikes", "add_drift", "add_step", "drop_chunk",
+           "add_regime_trend", "apply"]
 
 
 def robust_scale(x: np.ndarray) -> float:
@@ -52,12 +74,24 @@ def robust_scale(x: np.ndarray) -> float:
 
 def add_spikes(ctx: np.ndarray, rng: np.random.Generator,
                magnitude: float = 10.0, fraction: float = 0.05) -> np.ndarray:
-    """Inject sparse impulse spikes (noisy sensor glitches).
+    """Displace a random subset of context points by a large amount (sensor glitches).
 
     A random ``fraction`` of the *finite* context points are displaced by
     ``+/- magnitude * robust_scale`` (random sign per spike). Only previously
-    observed points are spiked (NaNs stay NaN), and the spikes are isolated
-    impulses, not a sustained shift.
+    observed points are spiked (NaNs stay NaN); the displacement is per-point and
+    never a sustained shift of a contiguous block (that is `add_step`).
+
+    Note on terminology: at the low end of the density grid (<=0.05) these are
+    isolated impulses in the sensor-glitch sense. At the top of the grid (0.3-0.4)
+    30-40% of points are displaced, which is heavy impulse *noise*, not a glitch.
+    The write-up must say "impulse noise at increasing density" rather than "sparse
+    spikes" when describing the density sweep; the high-density end is kept because
+    it is where Chronos-T5 demonstrably *does* track severity.
+
+    The sign is random per spike, which does NOT make the corruption invisible to
+    Chronos-T5's scaler: that scaler is mean(|x|), so a -20*MAD spike inflates it
+    exactly as much as +20*MAD. Measured scale inflation across the intensity sweep
+    is ~1.8x. See `measure_clamping.py`.
     """
     x = np.array(ctx, dtype=np.float32, copy=True)
     finite = np.flatnonzero(np.isfinite(x))
@@ -142,6 +176,42 @@ def drop_chunk(ctx: np.ndarray, rng: np.random.Generator,
     return x
 
 
+def add_regime_trend(ctx: np.ndarray, rng: np.random.Generator,
+                     slope: float = 5.0,
+                     switch_frac: float = REGIME_SWITCH_FRAC) -> np.ndarray:
+    """Change the *trend* partway through the context and keep it changed (regime shift).
+
+    The first ``1 - switch_frac`` of the context is left untouched. From the switch point
+    onward an additive ramp runs from 0 to ``+/- slope * robust_scale``, so the series is
+    continuous at the switch (no level jump -- that is `add_step`) but its slope changes,
+    and the change is still in force at the forecast origin.
+
+    Why this is not a duplicate of the other families. The other five say "the past
+    observations are wrong or missing", and the right response to all of them is to
+    discard the damaged part. A regime shift says "the generating process changed and is
+    still in the new mode", which is a *judgement*: extrapolate the new trend, or treat it
+    as an anomaly? Nothing in the context settles it. It is also the only family in which
+    the recent and the distant context disagree with each other.
+
+    Matched to `add_drift` by construction: at the same ``slope`` both displace the final
+    observation by exactly ``slope * robust_scale``. They differ only in whether the
+    displacement accumulated over the whole history (drift, self-consistent, no
+    breakpoint) or only over the last ``switch_frac`` (here, ~4x steeper, breakpoint
+    present). The pair isolates the breakpoint while holding origin displacement fixed.
+
+    NaNs are preserved (adding to NaN yields NaN).
+    """
+    x = np.array(ctx, dtype=np.float32, copy=True)
+    n = x.size
+    if n < 2 or slope == 0:
+        return x
+    m = min(max(2, int(round(switch_frac * n))), n)
+    sign = float(rng.choice([-1.0, 1.0]))
+    ramp = np.linspace(0.0, sign * slope * robust_scale(x), m, dtype=np.float32)
+    x[n - m:] = x[n - m:] + ramp
+    return x
+
+
 # Registry of (family, severity-label, severity-value) -> perturbation callable.
 # `apply` dispatches on family; severities are swept by the runner. "clean" is the
 # identity (the per-model baseline every degradation is measured against).
@@ -162,4 +232,6 @@ def apply(family: str, ctx: np.ndarray, rng: np.random.Generator,
         return drop_chunk(ctx, rng, fraction=severity, position="random")
     if family == "gap_boundary":                           # most-recent dropout (pinned to origin)
         return drop_chunk(ctx, rng, fraction=severity, position="recent")
+    if family == "regime_trend":                           # persistent trend change near origin
+        return add_regime_trend(ctx, rng, slope=severity)
     raise ValueError(f"unknown perturbation family {family!r}")

@@ -105,6 +105,7 @@ SEVERITIES = {
     "drift_step":       [0.5, 1.0, 2.0, 4.0, 8.0, 12.0, 16.0, 20.0],              # random-segment level shift x scale
     "gap":              [0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70],   # fraction blanked (random position)
     "gap_boundary":     [0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70],   # fraction blanked, pinned to context|horizon boundary
+    "regime_trend":     [0.5, 1.0, 2.0, 4.0, 8.0, 12.0, 16.0, 20.0],              # trend change in last 25%, displacement at origin x scale
 }
 # Spikes are swept as two controlled variables: "spikes_intensity" varies magnitude at fixed
 # density; "spikes_density" varies the spiked fraction at fixed magnitude. Two drift variants:
@@ -112,13 +113,18 @@ SEVERITIES = {
 # level shift of a random segment (bias jump that recovers). "gap" blanks a contiguous run at a
 # random position (not pinned to the origin); "gap_boundary" = same but pinned to the
 # context|horizon boundary (most-recent dropout).
+# NOTE: `regime_trend` is registered in SEVERITIES/_FAM_IDX but deliberately NOT listed
+# here. It was added after this seed-0 sweep had already produced `edge_case_results.csv`,
+# and is run for all four seeds uniformly through `run_seeds.py --families regime_trend
+# --seeds 0,1,2,3 --out edge_case_regime.csv`. Adding it here would silently change what
+# a re-run of this script means relative to the CSV already on disk.
 FAMILIES = ["spikes_intensity", "spikes_density", "drift", "drift_step", "gap", "gap_boundary"]
 CONDITIONS = [("clean", 0.0)] + [(f, s) for f in FAMILIES for s in SEVERITIES[f]]
 
 # Stable integer ids so perturbation RNG seeds are reproducible run-to-run.
 _DS_IDX = {d: i for i, (d, _) in enumerate(EDGE_DATASETS)}
 _FAM_IDX = {"clean": 0, "spikes_intensity": 1, "spikes_density": 5, "drift": 2,
-            "drift_step": 4, "gap": 3, "gap_boundary": 6}
+            "drift_step": 4, "gap": 3, "gap_boundary": 6, "regime_trend": 7}
 
 OUT = HERE / "results"          # outputs live next to this script (chronos2_t5/zero-shot/edge-case/results/)
 
