@@ -1,22 +1,47 @@
 # edge-case — corruption-robustness sub-study (Chronos-2 vs Chronos-T5)
 
-Injects controlled sensor faults (spikes, drift, level-shift, missing chunks) into the
-**forecast context** across the 25 Benchmark-II datasets and measures error vs the clean
-held-out window. Headline metric = **relative degradation** = metric(corrupted) / metric(clean).
-Run every script from this directory with the `chronos_bench` conda env.
+Injects controlled sensor faults (spikes, drift, level-shift, missing chunks, persistent
+trend change) into the **forecast context** across the 25 Benchmark-II datasets and
+measures error vs the clean held-out window. Headline metric = **relative degradation** =
+metric(corrupted) / metric(clean). Run every script from this directory with the
+`chronos_bench` conda env (`chronos2_t5/environment.yml`).
+
+> **Start at [`REPRODUCING.md`](REPRODUCING.md).** It maps every claim to the command that
+> produces it and the file it lands in, gives the full run order with timings, and lists
+> the six ways this pipeline can silently return a wrong answer. This README describes the
+> layout; that one tells you what to run and what to trust.
 
 > **Naming convention.** Files **without** an underscore prefix are the core reproducible
-> pipeline (`run_edge_cases.py`, `perturbations.py`, `make_edgecase_notebook.py`).
-> `_`-prefixed files are **supplementary one-off analyses layered on top** of that sweep
-> (extra model configs, side probes, and the report-figure generators). They are not scratch
-> —each is documented in the table below, and some feed the report figures in `plots/`.
+> pipeline — the `run_*` / `analyse_*` pair per experiment, plus `perturbations.py` and
+> `statistics.py`. `_`-prefixed files are **supplementary one-off analyses layered on top**
+> of the original sweep (extra model configs, side probes, and the report-figure
+> generators). They are not scratch — each is documented in the second table below, and
+> some feed the report figures in `plots/`.
 
 ## Layout
 
+### Paper pipeline
+
+These produce every number in the write-up. Run order and timings are in
+[`REPRODUCING.md`](REPRODUCING.md) §4.
+
+| path | what it does | GPU | writes |
+| --- | --- | --- | --- |
+| `perturbations.py` | the seven corruption families; also the canonical naming table | — | — |
+| `run_edge_cases.py` | main sweep, seed 0 — perturb, forecast C2 & T5, score MASE/WQL | yes | `results/edge_case_results.csv` |
+| `run_seeds.py` | re-runs chosen families under further seeds; `--out` and `--severities` let a new family or grid go to its own file | yes | `results/edge_case_seeds.csv`, `results/edge_case_regime*.csv` |
+| `measure_clamping.py` | instruments the Chronos-T5 tokeniser directly — what it admits, clamps, rescales | no | `results/clamping_measurements.csv` |
+| `run_cl_shuffle.py` | cross-learning sibling shuffle: native / foreign-same-freq / foreign-diff-freq | yes | `results/crosslearning_shuffle.csv` |
+| `statistics.py` | **the single source of truth for every p-value.** Fixes analysis unit, pairing and multiplicity; reports both metrics | no | `results/STATISTICS.md` |
+| `analyse_seeds.py` | C1 — per-curve monotonicity, held-out recovery test | no | `SEED_ANALYSIS_*.md`, `fig_seed_curves_*.png` |
+| `analyse_clamping.py` | C2 — do the candidate mechanisms predict recovery? (they do not) | no | `CLAMPING_ANALYSIS_*.md`, `fig_clamping_mechanism_*.png` |
+| `analyse_cl_shuffle.py` | C4 — gain by sibling condition, paired arm contrasts | no | `CL_SHUFFLE_ANALYSIS_*.md`, `fig_cl_shuffle_*.png` |
+| `analyse_regime.py` | C5 — slope on the new family, matched-pair vs `drift`, effect-size-matched control | no | `REGIME_ANALYSIS_*.md`, `fig_regime_*.png` |
+
+### Original sweep and report figures
+
 | path | what it holds | produced by |
 | --- | --- | --- |
-| `run_edge_cases.py` | main sweep — perturb context, forecast C2 & T5, score MASE/WQL + degradation | — |
-| `perturbations.py` | the controlled corruption families (spikes / drift / level-shift / missing) | — |
 | `_run_c2cl_full.py` | adds Chronos-2 **cross-learning** to the sweep (same protocol) → `_c2cl_full.csv` | — |
 | `_mk_three_config.py` | **3-config win-rate heatmap** figure (C2-CL / C2-uni / T5) | → `plots/` |
 | `_mk_examples.py` | **illustrative-series** figure (2 panels: missing@boundary, spikes) | → `plots/` |
@@ -38,7 +63,10 @@ These are the two figures used on the "Result 4 — Robustness to Corrupted Inpu
 
 ## Dependencies & run order
 
-Everything is driven by the CSVs in `results/`. To rebuild from scratch (conda env `chronos_bench`):
+For the **paper pipeline**, see [`REPRODUCING.md`](REPRODUCING.md) §4 — it has the full
+sequence, timings, and the traps.
+
+For the **original report figures** (conda env `chronos_bench`):
 
 ```bash
 # 1. main sweep (GPU) -> results/edge_case_results.csv, EDGE_CASE_REPORT.md, examples/
@@ -51,6 +79,10 @@ python _run_c2cl_full.py
 python _mk_three_config.py     # CPU-only  -> plots/robust_three_config.png
 python _mk_examples.py         # GPU       -> plots/robust_examples.png
 ```
+
+`Chronos2_EdgeCase_Robustness.ipynb` and `make_edgecase_notebook.py` predate the paper work
+(June 2026) and are kept as a historical record of the internship deliverable. They do not
+reflect the corrected statistics — for anything quantitative use `results/STATISTICS.md`.
 
 Data inputs for the two report figures:
 

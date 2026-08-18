@@ -1,0 +1,49 @@
+# Chronos-2 vs Chronos-T5 head-to-head study -- conda environment.
+#
+# Mirrors requirements.txt exactly (same pins, Python 3.11), in conda form, so the two
+# dependency manifests stay in lock-step. Every number in the corruption-robustness
+# study was produced in this environment.
+#
+# Create with:
+#   conda env create -f environment.yml
+#   conda activate chronos_bench
+#
+# IMPORTANT -- PyTorch is installed separately so you get the CUDA build for your GPU.
+# After `conda activate chronos_bench`, run ONE of:
+#   GPU (CUDA 12.8): pip install torch==2.9.1 --index-url https://download.pytorch.org/whl/cu128
+#   CPU-only:        pip install torch==2.9.1
+# (the pip block below intentionally omits torch; pick the right build above).
+#
+# REPRODUCIBILITY NOTE. Chronos-T5 decodes by drawing 20 samples, and both models run in
+# bf16, so absolute scores are not bit-identical across GPU models or driver versions.
+# The study's headline quantity is a *degradation ratio* -- corrupted score divided by the
+# same model's clean score on the same data in the same run -- which is insulated from
+# this, provided the clean and corrupted passes stay on one machine. They always do here:
+# every runner scores clean and corrupted inside the same process.
+name: chronos_bench
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      # Core forecasting + data. This one wheel ships Chronos-T5, Chronos-2 AND
+      # Chronos-Bolt; no separate package is needed for any of them.
+      - chronos-forecasting==2.2.2
+      - gluonts==0.16.2
+      - datasets==4.0.0
+      - transformers==4.57.6
+      - accelerate==1.14.0
+      - utilsforecast==0.2.11
+      # Numerics / IO
+      - numpy==2.1.3
+      - pandas==2.3.3
+      - pyarrow==20.0.0
+      - scipy==1.16.3
+      # Reporting
+      - matplotlib==3.10.9
+      - tabulate==0.10.0
+      # Notebook generation + execution
+      - nbformat==5.10.4
+      - nbconvert==7.17.1
+      - ipykernel==7.3.0
